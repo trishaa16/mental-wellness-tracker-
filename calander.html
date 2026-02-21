@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mental Wellness Tracker</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f9f9;
+  padding: 20px;
+}
+
+h1, h2 {
+  text-align: center;
+  color: #4CAF93;
+}
+
+.streak {
+  text-align: center;
+  font-size: 18px;
+  margin-bottom: 15px;
+}
+
+.calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  max-width: 500px;
+  margin: auto;
+}
+
+.day {
+  padding: 15px;
+  background: white;
+  text-align: center;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.happy { background: #A8E6CF; }
+.neutral { background: #FFD3B6; }
+.sad { background: #FFAAA5; }
+
+.journal {
+  max-width: 500px;
+  margin: 30px auto;
+}
+
+textarea {
+  width: 100%;
+  height: 120px;
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+button {
+  margin-top: 10px;
+  padding: 10px;
+  width: 100%;
+  background: #4CAF93;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+canvas {
+  max-width: 600px;
+  margin: 30px auto;
+  display: block;
+}
+</style>
+</head>
+
+<body>
+
+<h1>📅 Mood</h1>
+
+<div class="streak">
+🔥 Streak: <span id="streak">0</span> days
+</div>
+
+<div class="calendar" id="calendar"></div>
+
+<div class="journal">
+<h2>📝 Daily Notes</h2>
+<p id="selectedDate">Select a date</p>
+<textarea id="journalText" placeholder="Write your thoughts here..."></textarea>
+<button onclick="saveJournal()">Save Notes</button>
+</div>
+
+<h2>📊 Mood Progress</h2>
+<canvas id="moodChart"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const calendar = document.getElementById("calendar");
+const streakEl = document.getElementById("streak");
+const journalText = document.getElementById("journalText");
+const selectedDateEl = document.getElementById("selectedDate");
+
+let selectedDate = null;
+const data = JSON.parse(localStorage.getItem("wellnessData")) || {};
+
+const moods = {
+  happy: 3,
+  neutral: 2,
+  sad: 1
+};
+
+const now = new Date();
+const year = now.getFullYear();
+const month = now.getMonth();
+const days = new Date(year, month + 1, 0).getDate();
+
+function renderCalendar() {
+  calendar.innerHTML = "";
+  for (let d = 1; d <= days; d++) {
+    const key = `${year}-${month+1}-${d}`;
+    const div = document.createElement("div");
+    div.className = "day";
+    div.innerText = d;
+
+    if (data[key]?.mood) div.classList.add(data[key].mood);
+
+    div.onclick = () => selectDate(key);
+    calendar.appendChild(div);
+  }
+}
+
+function selectDate(key) {
+  selectedDate = key;
+  selectedDateEl.innerText = `Date: ${key}`;
+  journalText.value = data[key]?.journal || "";
+
+  const mood = prompt("Mood: happy / neutral / sad");
+  if (moods[mood]) {
+    data[key] = data[key] || {};
+    data[key].mood = mood;
+    saveData();
+  }
+}
+
+function saveJournal() {
+  if (!selectedDate) return alert("Select a date first!");
+  data[selectedDate] = data[selectedDate] || {};
+  data[selectedDate].journal = journalText.value;
+  saveData();
+  alert("Journal saved!");
+}
+
+function saveData() {
+  localStorage.setItem("wellnessData", JSON.stringify(data));
+  renderCalendar();
+  calculateStreak();
+  renderChart();
+}
+
+function calculateStreak() {
+  let streak = 0;
+  const today = new Date();
+
+  for (let i = 0; i < 365; i++) {
+    const d = new Date();
+    d.setDate(today.getDate() - i);
+    const key = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+    if (data[key]?.mood) streak++;
+    else break;
+  }
+  streakEl.innerText = streak;
+}
+
+function renderChart() {
+  const labels = [];
+  const values = [];
+
+  Object.keys(data).sort().forEach(key => {
+    if (data[key].mood) {
+      labels.push(key);
+      values.push(moods[data[key].mood]);
+    }
+  });
+
+  if (window.chart) window.chart.destroy();
+
+  const ctx = document.getElementById("moodChart");
+  window.chart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
+        label: "Mood Level",
+        data: values,
+        borderColor: "#4CAF93",
+        fill: false
+      }]
+    }
+  });
+}
+
+renderCalendar();
+calculateStreak();
+renderChart();
+</script>
+
+</body>
+</html>

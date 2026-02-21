@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Daily Journal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #f4f9f9;
+    padding: 20px;
+  }
+
+  h1 {
+    text-align: center;
+    color: #4CAF93;
+  }
+
+  .journal-container {
+    max-width: 600px;
+    margin: auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  }
+
+  .date {
+    text-align: center;
+    margin-bottom: 15px;
+    font-weight: bold;
+  }
+
+  textarea {
+    width: 100%;
+    height: 250px;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    resize: none;
+  }
+
+  button {
+    margin-top: 15px;
+    width: 100%;
+    padding: 12px;
+    background: #4CAF93;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: #3b9b7a;
+  }
+
+  .saved {
+    text-align: center;
+    margin-top: 10px;
+    color: green;
+    display: none;
+  }
+</style>
+</head>
+
+<body>
+
+<h1>📝 Daily Journal</h1>
+
+<div class="journal-container">
+  <div class="date" id="todayDate"></div>
+
+  <textarea id="journalText" placeholder="Write about your day here..."></textarea>
+
+  <button onclick="saveJournal()">Save Entry</button>
+
+  <div class="saved" id="savedMsg">✔ Journal saved</div>
+</div>
+
+<script>
+const today = new Date();
+const dateKey = today.toISOString().split("T")[0];
+
+const dateDisplay = document.getElementById("todayDate");
+const journalText = document.getElementById("journalText");
+const savedMsg = document.getElementById("savedMsg");
+
+dateDisplay.innerText = `Date: ${dateKey}`;
+
+const journalData = JSON.parse(localStorage.getItem("dailyJournal")) || {};
+
+if (journalData[dateKey]) {
+  journalText.value = journalData[dateKey];
+}
+
+function saveJournal() {
+  journalData[dateKey] = journalText.value;
+  localStorage.setItem("dailyJournal", JSON.stringify(journalData));
+  savedMsg.style.display = "block";
+  setTimeout(() => savedMsg.style.display = "none", 2000);
+}
+</script>
+
+</body>
+</html>
